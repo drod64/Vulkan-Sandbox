@@ -19,6 +19,9 @@ public:
      */
     GLFWWindow(uint32 width, uint32 height, const char *title);
 
+    GLFWWindow(const GLFWWindow &other) = delete;
+    GLFWWindow operator=(const GLFWWindow &other) = delete;
+
     /**
      * Destructor.
      */

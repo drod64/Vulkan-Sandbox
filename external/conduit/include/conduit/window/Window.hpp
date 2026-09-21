@@ -32,6 +32,8 @@ public:
      */
     Window(uint32 width, uint32 height, const char *title);
 
+    Window(const Window &other) = delete;
+    Window operator= (const Window &other) = delete;
     ~Window() = default;
 
     /**
