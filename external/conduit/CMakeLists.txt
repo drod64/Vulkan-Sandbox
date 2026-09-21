@@ -34,6 +34,7 @@ set(
     src/input/Input.cpp
 
     src/tests/InputTester.cpp
+    src/tests/vulkan/VulkanTester.cpp
 
     src/window/Window.cpp
 )

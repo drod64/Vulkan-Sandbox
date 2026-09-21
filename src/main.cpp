@@ -1,11 +1,8 @@
-#include <iostream>
-#include <vulkan/vulkan.hpp>
+#include <conduit/tests/vulkan/VulkanTester.hpp>
 
 int main()
 {
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-    std::cout << extensionCount << " extentions supported.\n";
+    conduit::VulkanTester vulkanTest;
+    vulkanTest.run();
     return 0;
 }
