@@ -1,31 +1,31 @@
 #include <iostream>
-#include <conduit/tests/vulkan/VulkanTester.hpp>
+#include <vulkan-triangle/App.hpp>
 #include <conduit/Input/Input.hpp>
 #include <conduit/window/Window.hpp>
 
-void conduit::VulkanTester::initialize()
+void vtapp::App::initialize()
 {
     conduit::platform::initialize();
 }
 
-void conduit::VulkanTester::shutdown()
+void vtapp::App::shutdown()
 {
     conduit::platform::shutdown();
 }
 
-conduit::VulkanTester::VulkanTester()
+vtapp::App::App()
 {
     initialize();
 }
 
-conduit::VulkanTester::~VulkanTester()
+vtapp::App::~App()
 {
     shutdown();
 }
 
-void conduit::VulkanTester::run()
+void vtapp::App::run()
 {
-    conduit::Window window(VulkanTester::WIDTH, VulkanTester::HEIGHT, "Conduit Vulkan Tester");
+    conduit::Window window(App::WIDTH, App::HEIGHT, "Vulkan Triangle");
     conduit::Input input(window);
 
     while (!window.shouldClose())
@@ -33,7 +33,7 @@ void conduit::VulkanTester::run()
         window.pollEvents();
         input.poll();
 
-        if (input.keyboard().wasPressed(conduit::Key::ESCAPE))
+        if (input.keyboard().wasReleased(conduit::Key::ESCAPE))
         {
             window.close();
         }

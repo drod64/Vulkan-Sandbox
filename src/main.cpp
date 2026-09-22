@@ -1,8 +1,8 @@
-#include <conduit/tests/vulkan/VulkanTester.hpp>
+#include <vulkan-triangle/App.hpp>
 
 int main()
 {
-    conduit::VulkanTester vulkanTest;
-    vulkanTest.run();
+    vtapp::App app;
+    app.run();
     return 0;
 }

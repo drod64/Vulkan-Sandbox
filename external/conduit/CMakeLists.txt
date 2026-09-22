@@ -19,8 +19,6 @@ if (NOT glfw3_FOUND) # If there's none, fetch and build glfw
     endif()
 endif()
 
-find_package(Vulkan REQUIRED)
-
 set(
     SOURCE_FILES
     src/framework/Time.cpp
@@ -34,7 +32,6 @@ set(
     src/input/Input.cpp
 
     src/tests/InputTester.cpp
-    src/tests/vulkan/VulkanTester.cpp
 
     src/window/Window.cpp
 )
@@ -97,7 +94,3 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/external/sm/include)
 target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/sm)
 target_link_libraries(${PROJECT_NAME} SM)
-
-# Link Vulkan
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/vulkan/include)
-target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan)

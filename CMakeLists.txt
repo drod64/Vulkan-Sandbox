@@ -22,6 +22,13 @@ else ()
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 endif ()
 
+# Link chosen app
+add_subdirectory(${CMAKE_SOURCE_DIR}/apps/vulkan-triangle)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/apps/vulkan-triangle/include)
+target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/apps/vulkan-triangle)
+target_link_libraries(${PROJECT_NAME} VULKAN_TRIANGLE_APP)
+
+
 # Link conduit library.
 add_subdirectory(${CMAKE_SOURCE_DIR}/external/conduit)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/external/conduit/include)
