@@ -8,6 +8,7 @@
 
 namespace vtapp {
 const conduit::vector<char const *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+const conduit::vector<const char*> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
 
 #ifdef NDEBUG
 constexpr bool enableValidationLayers = false;
@@ -20,6 +21,8 @@ private:
     vk::raii::Context                   m_context;
     vk::raii::Instance                  m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT    m_debugMessenger = nullptr;
+
+    vk::raii::PhysicalDevice            m_physical_device = nullptr;
 
     /**
      * Vulkan callback for debug purposes.
@@ -35,11 +38,6 @@ private:
         const vk::DebugUtilsMessengerCallbackDataEXT   *pCallbackData,
         void                                           *pUserData
     );
-
-    /**
-     * Sets up the debug messenger.
-     */
-    void setupDebugMessenger();
 
     /**
      * Retrives the required instance layers.
@@ -61,6 +59,28 @@ private:
      * Creates the vulkan instance.
      */
     void createVkInstance();
+
+    /**
+    * Sets up the debug messenger.
+    */
+    void setupDebugMessenger();
+
+    /**
+     *  Helper function that checks if a physical device is suitable for Vulkan use.
+     * 
+     *  @return true if the physical device is suitable, false otherwise
+     */
+    bool isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice);
+
+    /**
+     * Picks a physical device for Vulkan to use.
+     */
+    void pickPhysicalDevice();
+
+    /**
+     * Initializes the Vulkan library for the application.
+     */
+    void initVulkan();
     
     /**
      * Starts up the application.

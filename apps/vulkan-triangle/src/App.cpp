@@ -14,32 +14,6 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL vtapp::App::debugCallback(
     return vk::False;
 }
 
-void vtapp::App::setupDebugMessenger()
-{
-    if (!vtapp::enableValidationLayers) return;
-
-    // State which severity flags we would like the callback to be activated on.
-    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose  |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo     |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning  |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
-        
-    // State which type flags we would like the callback to be activated on.
-    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral      | 
-        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance  |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-
-    vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT {
-        .messageSeverity    = severityFlags,
-        .messageType        = messageTypeFlags,
-        .pfnUserCallback    =&debugCallback
-    };
-
-    m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
-}
-
 conduit::vector<char const*> vtapp::App::getRequiredInstanceLayers()
 {
     conduit::vector<char const*> requiredLayers;
@@ -124,14 +98,96 @@ void vtapp::App::createVkInstance()
     m_instance = vk::raii::Instance(m_context, createInfo);
 }
 
+void vtapp::App::setupDebugMessenger()
+{
+    if (!vtapp::enableValidationLayers) return;
+
+    // State which severity flags we would like the callback to be activated on.
+    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose  |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo     |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning  |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+        
+    // State which type flags we would like the callback to be activated on.
+    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral      | 
+        vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance  |
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
+
+    vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT {
+        .messageSeverity    = severityFlags,
+        .messageType        = messageTypeFlags,
+        .pfnUserCallback    =&debugCallback
+    };
+
+    m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
+}
+
+bool vtapp::App::isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice)
+{
+    // Check if the device supports Vulkan 1.3 API version.
+    bool supportsVulkan1_3 = physicalDevice.getProperties().apiVersion >= vk::ApiVersion13;
+
+    // Check if any of the queue families support graphics operations.
+    auto queueFamilies = physicalDevice.getQueueFamilyProperties();
+    bool supportsGraphics = std::ranges::any_of(queueFamilies, [] (auto const &qfp) {
+        return !!(qfp.queueFlags & vk::QueueFlagBits::eGraphics);
+    });
+
+    // Check if all required physicalDevice extensions are available.
+    auto availableDeviceExtensions = physicalDevice.enumerateDeviceExtensionProperties();
+    bool supportsAllRequiredExtensions = std::ranges::all_of(vtapp::requiredDeviceExtension, [&availableDeviceExtensions] (auto const &requiredDeviceExtension) {
+        return std::ranges::any_of(availableDeviceExtensions, [requiredDeviceExtension] (const auto &availableDeviceExtension) {
+            return strcmp(availableDeviceExtension.extensionName, requiredDeviceExtension) == 0;
+        });
+    });
+
+    // Check if the physicalDevice supports the required features.
+    auto features = physicalDevice.template getFeatures2<vk::PhysicalDeviceFeatures2,
+                                                        vk::PhysicalDeviceVulkan11Features,
+                                                        vk::PhysicalDeviceVulkan13Features,
+                                                        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+
+    bool supportsRequiredFeatures = features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters    &&
+                                    features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering        &&
+                                    features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
+
+    return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;
+}
+
+void vtapp::App::pickPhysicalDevice()
+{
+    // vk::raii::PhysicalDevice
+
+    auto physicalDevices = m_instance.enumeratePhysicalDevices();
+
+    auto const devIter = std::ranges::find_if(physicalDevices, [&] (auto const &physicalDevice) {
+        return isDeviceSuitable(physicalDevice);
+    });
+
+    // Throw an error if no GPUs support Vulkan.
+    if (devIter == physicalDevices.end())
+    {
+        throw std::runtime_error("failed to find a suitable GPU.");
+    }
+
+    m_physical_device = *devIter;
+}
+
+void vtapp::App::initVulkan()
+{
+    createVkInstance();
+    setupDebugMessenger();
+    pickPhysicalDevice();
+}
+
 void vtapp::App::initialize()
 {
     conduit::platform::initialize();
 
-    createVkInstance();
-    setupDebugMessenger();
+    initVulkan();
 }
-
 
 void vtapp::App::shutdown()
 {
