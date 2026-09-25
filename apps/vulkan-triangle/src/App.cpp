@@ -18,7 +18,7 @@ conduit::vector<char const*> vtapp::App::getRequiredInstanceLayers()
 {
     conduit::vector<char const*> requiredLayers;
 
-    if (enableValidationLayers)
+    if (vtapp::enableValidationLayers)
     {
         requiredLayers.assign(vtapp::validationLayers.begin(),vtapp::validationLayers.end());
     }
@@ -58,6 +58,7 @@ void vtapp::App::createVkInstance()
 {
     // vk::ApplicationInfo
     // vk::InstanceCreateInfo
+
     // vk::raii::Instance
 
     // 1. Create app info.
@@ -104,8 +105,6 @@ void vtapp::App::setupDebugMessenger()
 
     // State which severity flags we would like the callback to be activated on.
     vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose  |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo     |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning  |
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
         
@@ -175,11 +174,68 @@ void vtapp::App::pickPhysicalDevice()
     m_physical_device = *devIter;
 }
 
+void vtapp::App::createLogicalDevice()
+{
+    // vk::DeviceQueueCreateInfo
+    // vk::DeviceCreateInfo
+
+    // vk::raii::Device
+    // vk::raii::Queue
+
+    // Get queue family properties from physical device.
+    conduit::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physical_device.getQueueFamilyProperties();
+
+    // Query the queue family with the desired capability (graphics).
+    auto graphicsQueueFamilyProperty = std::ranges::find_if(queueFamilyProperties, [] (auto const &qfp) {
+        return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+    });
+    auto graphicsIndex = static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
+
+    // Create queue info.
+    float queuePriority = 0.5f;
+    vk::DeviceQueueCreateInfo deviceQueueCreateInfo = {
+        .queueFamilyIndex = graphicsIndex,
+        .queueCount = 1,
+        .pQueuePriorities = &queuePriority
+    };
+
+    // Create feature chain.
+    vk::StructureChain <
+        vk::PhysicalDeviceFeatures2,
+        vk::PhysicalDeviceVulkan11Features,
+        vk::PhysicalDeviceVulkan13Features,
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+    >
+    featureChain = {
+        {},                                 // Nothing required from vk::PhysicalDeviceFeatures2
+        {.shaderDrawParameters  = true},    // enable shader draw parameters from Vulkan 1.1
+        {.dynamicRendering      = true},    // enable shader draw parameters from Vulkan 1.3
+        {.extendedDynamicState  = true}     // enable extended dynamic state from the extension
+    };
+
+    // Create logical device info.
+    vk::DeviceCreateInfo deviceCreateInfo {
+        .pNext                      = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+        .queueCreateInfoCount       = 1,
+        .pQueueCreateInfos          = &deviceQueueCreateInfo,
+        .enabledExtensionCount      = static_cast<uint32_t>(vtapp::requiredDeviceExtension.size()),
+        .ppEnabledExtensionNames    = vtapp::requiredDeviceExtension.data()
+    };
+
+    // Create the logical device.
+    m_logical_device = vk::raii::Device(m_physical_device, deviceCreateInfo);
+
+    // Create queue handle.
+    m_graphics_queue = vk::raii::Queue(m_logical_device, graphicsIndex, 0);
+
+}
+
 void vtapp::App::initVulkan()
 {
     createVkInstance();
     setupDebugMessenger();
     pickPhysicalDevice();
+    createLogicalDevice();
 }
 
 void vtapp::App::initialize()

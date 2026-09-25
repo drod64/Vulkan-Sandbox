@@ -23,6 +23,8 @@ private:
     vk::raii::DebugUtilsMessengerEXT    m_debugMessenger = nullptr;
 
     vk::raii::PhysicalDevice            m_physical_device = nullptr;
+    vk::raii::Device                    m_logical_device = nullptr;
+    vk::raii::Queue                     m_graphics_queue = nullptr;
 
     /**
      * Vulkan callback for debug purposes.
@@ -76,6 +78,11 @@ private:
      * Picks a physical device for Vulkan to use.
      */
     void pickPhysicalDevice();
+
+    /**
+     * Creates a logical device to interact with the physical device.
+     */
+    void createLogicalDevice();
 
     /**
      * Initializes the Vulkan library for the application.
