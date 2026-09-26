@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vulkan-triangle/App.hpp>
 #include <conduit/Input/Input.hpp>
-#include <conduit/window/Window.hpp>
 
 VKAPI_ATTR vk::Bool32 VKAPI_CALL vtapp::App::debugCallback(
         vk::DebugUtilsMessageSeverityFlagBitsEXT        severity,
@@ -52,6 +51,11 @@ conduit::vector<const char*> vtapp::App::getRequiredInstanceExtensions()
     }
 
     return extensions;
+}
+
+void vtapp::App::createWindow()
+{
+    m_window = conduit::Window(App::WIDTH, App::HEIGHT, "Vulkan Triangle");
 }
 
 void vtapp::App::createVkInstance()
@@ -121,6 +125,21 @@ void vtapp::App::setupDebugMessenger()
     };
 
     m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
+}
+
+void vtapp::App::createSurface()
+{
+    // vk::raii::SurfaceKHR
+
+    // Attempt to make window surface through glfw API.
+    VkSurfaceKHR surface;
+    if (glfwCreateWindowSurface(*m_instance, m_window.platformWindow().nativeHandle(), nullptr, &surface) != 0)
+    {
+        throw std::runtime_error("failed to create window surface.");
+    }
+
+    // Create window surface.
+    m_surface = vk::raii::SurfaceKHR(m_instance, surface);
 }
 
 bool vtapp::App::isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice)
@@ -234,6 +253,7 @@ void vtapp::App::initVulkan()
 {
     createVkInstance();
     setupDebugMessenger();
+    createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
 }
@@ -241,6 +261,8 @@ void vtapp::App::initVulkan()
 void vtapp::App::initialize()
 {
     conduit::platform::initialize();
+    
+    createWindow();
 
     initVulkan();
 }
@@ -262,17 +284,16 @@ vtapp::App::~App()
 
 void vtapp::App::run()
 {
-    conduit::Window window(App::WIDTH, App::HEIGHT, "Vulkan Triangle");
-    conduit::Input input(window);
+    conduit::Input input(m_window);
 
-    while (!window.shouldClose())
+    while (!m_window.shouldClose())
     {
-        window.pollEvents();
+        m_window.pollEvents();
         input.poll();
 
         if (input.keyboard().wasReleased(conduit::Key::ESCAPE))
         {
-            window.close();
+            m_window.close();
         }
     }
 }

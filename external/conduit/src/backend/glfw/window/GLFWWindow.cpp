@@ -1,6 +1,12 @@
 #include <conduit/backend/glfw/window/GLFWWindow.hpp>
 #include <conduit/backend/glfw/input/GLFWInput.hpp>
 
+void conduit::glfw::window::GLFWWindow::destroy()
+{
+    glfwDestroyWindow(m_glfw_window);
+    m_glfw_window = nullptr;
+}
+
 conduit::glfw::window::GLFWWindow::GLFWWindow(uint32 width, uint32 height, const char *title)
 {
     m_glfw_window = glfwCreateWindow(width, height, title, nullptr, nullptr);
@@ -10,9 +16,30 @@ conduit::glfw::window::GLFWWindow::GLFWWindow(uint32 width, uint32 height, const
     conduit::glfw::input::detail::registerGLFWCallbacks(m_glfw_window);
 }
 
+conduit::glfw::window::GLFWWindow::GLFWWindow(GLFWWindow &&other) noexcept
+{
+    m_glfw_window = other.m_glfw_window;
+
+    other.m_glfw_window = nullptr;
+}
+
+conduit::glfw::window::GLFWWindow& conduit::glfw::window::GLFWWindow::operator=(GLFWWindow &&other) noexcept
+{
+    if (this != &other)
+    {
+        destroy();
+
+        m_glfw_window = other.m_glfw_window;
+
+        other.m_glfw_window = nullptr;
+    }
+
+    return *this;
+}
+
 conduit::glfw::window::GLFWWindow::~GLFWWindow()
 {
-    glfwDestroyWindow(m_glfw_window);
+    destroy();
 }
 
 bool conduit::glfw::window::GLFWWindow::shouldClose() const

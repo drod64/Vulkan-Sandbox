@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_raii.hpp>
 #include <conduit/core/primitives.hpp>
 #include <conduit/core/containers/vector.hpp>
+#include <conduit/window/Window.hpp>
 
 namespace vtapp {
 const conduit::vector<char const *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
@@ -18,6 +19,8 @@ constexpr bool enableValidationLayers = true;
 
 class App {
 private:
+    conduit::Window                     m_window;
+
     vk::raii::Context                   m_context;
     vk::raii::Instance                  m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT    m_debugMessenger = nullptr;
@@ -25,6 +28,8 @@ private:
     vk::raii::PhysicalDevice            m_physical_device = nullptr;
     vk::raii::Device                    m_logical_device = nullptr;
     vk::raii::Queue                     m_graphics_queue = nullptr;
+
+    vk::raii::SurfaceKHR                m_surface = nullptr;
 
     /**
      * Vulkan callback for debug purposes.
@@ -58,6 +63,11 @@ private:
     conduit::vector<const char*> getRequiredInstanceExtensions();
     
     /**
+     * Creates the window of the application.
+     */
+    void createWindow();
+
+    /**
      * Creates the vulkan instance.
      */
     void createVkInstance();
@@ -66,6 +76,11 @@ private:
     * Sets up the debug messenger.
     */
     void setupDebugMessenger();
+
+    /**
+     * Creates a surface for Vulkan.
+     */
+    void createSurface();
 
     /**
      *  Helper function that checks if a physical device is suitable for Vulkan use.

@@ -9,7 +9,14 @@ class GLFWWindow {
 private:
     GLFWwindow *m_glfw_window = nullptr;
 
+    /**
+     * Destroys the glfw window pointer.
+     */
+    void destroy();
 public:
+
+    GLFWWindow() = default;
+
     /**
      * Parameterized constructor.
      * 
@@ -21,6 +28,9 @@ public:
 
     GLFWWindow(const GLFWWindow &other) = delete;
     GLFWWindow operator=(const GLFWWindow &other) = delete;
+
+    GLFWWindow(GLFWWindow &&other) noexcept;
+    GLFWWindow& operator=(GLFWWindow &&other) noexcept;
 
     /**
      * Destructor.

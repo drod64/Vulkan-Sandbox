@@ -23,6 +23,8 @@ private:
     platform::Window m_platform_window;
 
 public:
+    Window() = default;
+
     /**
      * Parameterized constructor.
      * 
@@ -34,6 +36,9 @@ public:
 
     Window(const Window &other) = delete;
     Window operator= (const Window &other) = delete;
+    Window(Window &&other) noexcept;
+    Window& operator=(Window &&other) noexcept;
+
     ~Window() = default;
 
     /**
@@ -82,6 +87,11 @@ public:
      * @return true if the window is minimized, false otherwsie
      */
     bool isMinimized() const;
+
+    /**
+     * Accessor function for Vulkan testing.
+     */
+    const platform::Window& platformWindow() const;
 }; // class Window
 } // namespace conduit
 

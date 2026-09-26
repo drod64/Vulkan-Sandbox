@@ -4,6 +4,21 @@ conduit::Window::Window(uint32 width, uint32 height, const char *title) :
 m_platform_window(width, height, title)
 {}
 
+conduit::Window::Window(Window &&other) noexcept
+{
+    m_platform_window = std::move(other.m_platform_window);
+}
+
+conduit::Window& conduit::Window::operator=(Window &&other) noexcept
+{
+    if (this != &other)
+    {
+        m_platform_window = std::move(other.m_platform_window);
+    }
+
+    return *this;
+} 
+
 bool conduit::Window::shouldClose() const
 {
     return m_platform_window.shouldClose();
@@ -47,4 +62,9 @@ bool conduit::Window::isFocused() const
 bool conduit::Window::isMinimized() const
 {
     return m_platform_window.isMinimized();
+}
+
+const conduit::platform::Window& conduit::Window::platformWindow() const
+{
+    return m_platform_window;
 }
