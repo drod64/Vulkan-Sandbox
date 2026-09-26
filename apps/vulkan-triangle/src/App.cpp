@@ -204,20 +204,24 @@ void vtapp::App::createLogicalDevice()
     // Get queue family properties from physical device.
     conduit::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physical_device.getQueueFamilyProperties();
 
-    // Query the queue family with the desired capability (graphics).
-    auto graphicsQueueFamilyProperty = std::ranges::find_if(queueFamilyProperties, [] (auto const &qfp) {
-        return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
-    });
-    auto graphicsIndex = static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
+    // Query the queue family with the desired capability (graphics and presentation on created surface).
+    uint32_t queueIndex = ~0;
+    for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); ++qfpIndex)
+    {
+        if (queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics &&
+            m_physical_device.getSurfaceSupportKHR(qfpIndex, *m_surface))
+        {
+            queueIndex = qfpIndex;
+            break;
+        }
+    }
 
-    // Create queue info.
-    float queuePriority = 0.5f;
-    vk::DeviceQueueCreateInfo deviceQueueCreateInfo = {
-        .queueFamilyIndex = graphicsIndex,
-        .queueCount = 1,
-        .pQueuePriorities = &queuePriority
-    };
-
+    // Throw error if no queue is found.
+    if (queueIndex == ~0)
+    {
+        throw std::runtime_error("no suitable queue found that supports graphics and presentation");
+    }
+    
     // Create feature chain.
     vk::StructureChain <
         vk::PhysicalDeviceFeatures2,
@@ -230,6 +234,14 @@ void vtapp::App::createLogicalDevice()
         {.shaderDrawParameters  = true},    // enable shader draw parameters from Vulkan 1.1
         {.dynamicRendering      = true},    // enable shader draw parameters from Vulkan 1.3
         {.extendedDynamicState  = true}     // enable extended dynamic state from the extension
+    };
+
+    // Create queue info.
+    float queuePriority = 0.5f;
+    vk::DeviceQueueCreateInfo deviceQueueCreateInfo = {
+        .queueFamilyIndex = queueIndex,
+        .queueCount = 1,
+        .pQueuePriorities = &queuePriority
     };
 
     // Create logical device info.
@@ -245,7 +257,7 @@ void vtapp::App::createLogicalDevice()
     m_logical_device = vk::raii::Device(m_physical_device, deviceCreateInfo);
 
     // Create queue handle.
-    m_graphics_queue = vk::raii::Queue(m_logical_device, graphicsIndex, 0);
+    m_graphics_queue = vk::raii::Queue(m_logical_device, queueIndex, 0);
 
 }
 
