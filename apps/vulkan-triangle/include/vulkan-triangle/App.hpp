@@ -31,10 +31,11 @@ private:
 
     vk::raii::SurfaceKHR                m_surface = nullptr;
 
-    vk::raii::SwapchainKHR              m_swap_chain = nullptr;
-    vk::SurfaceFormatKHR                m_swap_chain_surface_format;
-    vk::Extent2D                        m_swap_chain_extent;
-    conduit::vector<vk::Image>          m_swap_chain_images;
+    vk::raii::SwapchainKHR                      m_swap_chain = nullptr;
+    vk::SurfaceFormatKHR                        m_swap_chain_surface_format;
+    vk::Extent2D                                m_swap_chain_extent;
+    conduit::vector<vk::Image>                  m_swap_chain_images;
+    conduit::vector<vk::raii::ImageView>        m_swap_chain_image_views;
 
     /**
      * Vulkan callback for debug purposes.
@@ -136,6 +137,11 @@ private:
      * Creates a swap chain.
      */
     void createSwapChain();
+
+    /**
+     * Creates the rendering pipeline's image views.
+     */
+    void createImageViews();
 
     /**
      * Initializes the Vulkan library for the application.

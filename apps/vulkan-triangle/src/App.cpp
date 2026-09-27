@@ -351,6 +351,23 @@ void vtapp::App::createSwapChain()
     m_swap_chain_images = m_swap_chain.getImages();
 }
 
+void vtapp::App::createImageViews()
+{
+    assert(m_swap_chain_image_views.empty());
+
+    vk::ImageViewCreateInfo imageViewCreateInfo {
+        .viewType           = vk::ImageViewType::e2D,
+        .format             = m_swap_chain_surface_format.format,
+        .subresourceRange   = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } 
+    };
+
+    for (auto &image : m_swap_chain_images)
+    {
+        imageViewCreateInfo.image = image;
+        m_swap_chain_image_views.emplace_back(m_logical_device, imageViewCreateInfo);
+    }
+}
+
 void vtapp::App::initVulkan()
 {
     createVkInstance();
@@ -359,6 +376,7 @@ void vtapp::App::initVulkan()
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();
+    createImageViews();
 }
 
 void vtapp::App::initialize()
