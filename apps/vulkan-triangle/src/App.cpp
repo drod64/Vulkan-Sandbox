@@ -261,6 +261,96 @@ void vtapp::App::createLogicalDevice()
 
 }
 
+vk::SurfaceFormatKHR vtapp::App::chooseSwapSurfaceFormat(const conduit::vector<vk::SurfaceFormatKHR> &availableFormats)
+{
+    const auto formatIt = std::ranges::find_if(availableFormats, [] (const auto &format) -> bool {
+        return format.format == vk::Format::eB8G8R8A8Srgb && format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
+    });
+
+    return (formatIt != availableFormats.end()) ? *formatIt : availableFormats[0];
+}
+
+vk::PresentModeKHR vtapp::App::chooseSwapPresentMode(const conduit::vector<vk::PresentModeKHR> &availablePresentMode)
+{
+    // Specify desired mode for app.
+    const vk::PresentModeKHR DESIRED_MODE = vk::PresentModeKHR::eMailbox;
+
+    // Ensure a default eFifo mode is available.
+    assert(std::ranges::any_of(availablePresentMode, [] (const auto &presentMode) {
+        return presentMode == vk::PresentModeKHR::eFifo;
+    }));
+
+    // Check if desired mode is available.
+    bool modeFound = std::ranges::any_of(availablePresentMode, [] (const vk::PresentModeKHR &value) -> bool {
+        return value == DESIRED_MODE;
+    });
+    
+    // Return mode (dependent on result).
+    return (modeFound) ? DESIRED_MODE : vk::PresentModeKHR::eFifo;
+}
+
+vk::Extent2D vtapp::App::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities)
+{
+    if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+    {
+        return surfaceCapabilities.currentExtent;
+    }
+
+    int width, height;
+    glfwGetFramebufferSize(m_window.platformWindow().nativeHandle(), &width, &height);
+
+    return {
+        std::clamp<uint32_t>(width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width),
+        std::clamp<uint32_t>(height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height)
+    };
+}
+
+uint32_t vtapp::App::chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities)
+{
+    auto minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
+
+    if ((surfaceCapabilities.maxImageCount > 0) && (surfaceCapabilities.maxImageCount < minImageCount))
+    {
+        minImageCount = surfaceCapabilities.maxImageCount;
+    }
+
+    return minImageCount;
+}
+
+void vtapp::App::createSwapChain()
+{
+    // Get containers to query.
+    vk::SurfaceCapabilitiesKHR              surfaceCapabilities     = m_physical_device.getSurfaceCapabilitiesKHR(*m_surface);
+    conduit::vector<vk::SurfaceFormatKHR>   availableFormats        = m_physical_device.getSurfaceFormatsKHR(*m_surface);
+    conduit::vector<vk::PresentModeKHR>     availablePresentModes   = m_physical_device.getSurfacePresentModesKHR(*m_surface);
+
+    // Get required settings for swap chain.
+    m_swap_chain_extent             = chooseSwapExtent(surfaceCapabilities);
+    uint32_t minImageCount          = chooseSwapMinImageCount(surfaceCapabilities);
+    m_swap_chain_surface_format     = chooseSwapSurfaceFormat(availableFormats);
+
+    // Create swap chain create info.
+    vk::SwapchainCreateInfoKHR swapChainCreateInfo {
+        .surface            = *m_surface,
+        .minImageCount      = minImageCount,
+        .imageFormat        = m_swap_chain_surface_format.format,
+        .imageColorSpace    = m_swap_chain_surface_format.colorSpace,
+        .imageExtent        = m_swap_chain_extent,
+        .imageArrayLayers   = 1,
+        .imageUsage         = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageSharingMode   = vk::SharingMode::eExclusive,
+        .preTransform       = surfaceCapabilities.currentTransform,
+        .compositeAlpha     = vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        .presentMode        = chooseSwapPresentMode(availablePresentModes),
+        .clipped            = true,
+        .oldSwapchain       = nullptr
+    };
+
+    // Create the swap chain (and get the images).
+    m_swap_chain = vk::raii::SwapchainKHR(m_logical_device, swapChainCreateInfo);
+    m_swap_chain_images = m_swap_chain.getImages();
+}
+
 void vtapp::App::initVulkan()
 {
     createVkInstance();
@@ -268,6 +358,7 @@ void vtapp::App::initVulkan()
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
+    createSwapChain();
 }
 
 void vtapp::App::initialize()

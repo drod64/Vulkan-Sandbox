@@ -31,6 +31,11 @@ private:
 
     vk::raii::SurfaceKHR                m_surface = nullptr;
 
+    vk::raii::SwapchainKHR              m_swap_chain = nullptr;
+    vk::SurfaceFormatKHR                m_swap_chain_surface_format;
+    vk::Extent2D                        m_swap_chain_extent;
+    conduit::vector<vk::Image>          m_swap_chain_images;
+
     /**
      * Vulkan callback for debug purposes.
      * 
@@ -98,6 +103,39 @@ private:
      * Creates a logical device to interact with the physical device.
      */
     void createLogicalDevice();
+
+    /**
+     * Chooses a surface format for the swap chain.
+     * 
+     * @param availableFormats a container of the available formats to choose from
+     */
+    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const conduit::vector<vk::SurfaceFormatKHR> &availableFormats);
+
+    /**
+     * Chooses a present mode for the swap chain.
+     * 
+     * @param availablePresentModes a container of the available present modes to choose from
+     */
+    vk::PresentModeKHR chooseSwapPresentMode(const conduit::vector<vk::PresentModeKHR> &availablePresentModes);
+
+    /**
+     * Chooses a swap extent for the swap chain.
+     * 
+     * @param surfaceCapabilities the available capabilities provided by the surface obj
+     */
+    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
+
+    /**
+     * Retrieves the amount of minimum images for the swap chain.
+     * 
+     * @param surfaceCapabilities the available capabilities provided by the surface obj 
+     */
+    uint32_t chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR &surfaceCapabilities);
+
+    /**
+     * Creates a swap chain.
+     */
+    void createSwapChain();
 
     /**
      * Initializes the Vulkan library for the application.
