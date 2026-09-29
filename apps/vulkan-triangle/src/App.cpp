@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vulkan-triangle/App.hpp>
+#include <vulkan-triangle/util.hpp>
 #include <conduit/Input/Input.hpp>
 
 VKAPI_ATTR vk::Bool32 VKAPI_CALL vtapp::App::debugCallback(
@@ -368,6 +369,36 @@ void vtapp::App::createImageViews()
     }
 }
 
+vk::raii::ShaderModule vtapp::App::createShaderModule(const conduit::vector<char> &code) const
+{
+    vk::ShaderModuleCreateInfo createInfo {
+        .codeSize   = code.size() * sizeof(char),
+        .pCode      = reinterpret_cast<const uint32_t*>(code.data())
+    };
+    vk::raii::ShaderModule shaderModule(m_logical_device, createInfo);
+
+    return shaderModule;
+}
+
+void vtapp::App::createGraphicsPipeline()
+{
+    vk::raii::ShaderModule shaderModule = createShaderModule(vtapp::readFile("apps//vulkan-triangle//shaders//slang.spv"));
+
+    vk::PipelineShaderStageCreateInfo vertShaderStageInfo {
+        .stage  = vk::ShaderStageFlagBits::eVertex,
+        .module = shaderModule,
+        .pName  = "vertMain"
+    };
+
+    vk::PipelineShaderStageCreateInfo fragShaderStageInfo {
+        .stage  = vk::ShaderStageFlagBits::eFragment,
+        .module = shaderModule,
+        .pName  = "fragMain"
+    };
+
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+}
+
 void vtapp::App::initVulkan()
 {
     createVkInstance();
@@ -377,6 +408,7 @@ void vtapp::App::initVulkan()
     createLogicalDevice();
     createSwapChain();
     createImageViews();
+    createGraphicsPipeline();
 }
 
 void vtapp::App::initialize()

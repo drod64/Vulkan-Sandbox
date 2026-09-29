@@ -143,6 +143,13 @@ private:
      */
     void createImageViews();
 
+    [[nodiscard]] vk::raii::ShaderModule createShaderModule(const conduit::vector<char> &code) const;
+
+    /**
+     * Creates the graphics pipeline for the app.
+     */
+    void createGraphicsPipeline();
+
     /**
      * Initializes the Vulkan library for the application.
      */
