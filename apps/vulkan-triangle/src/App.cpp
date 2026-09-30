@@ -382,7 +382,7 @@ vk::raii::ShaderModule vtapp::App::createShaderModule(const conduit::vector<char
 
 void vtapp::App::createGraphicsPipeline()
 {
-    vk::raii::ShaderModule shaderModule = createShaderModule(vtapp::readFile("apps//vulkan-triangle//shaders//slang.spv"));
+    vk::raii::ShaderModule shaderModule = createShaderModule(vtapp::util::readFile("apps//vulkan-triangle//shaders//slang.spv"));
 
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo {
         .stage  = vk::ShaderStageFlagBits::eVertex,

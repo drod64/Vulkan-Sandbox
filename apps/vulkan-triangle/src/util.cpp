@@ -1,13 +1,13 @@
 #include <vulkan-triangle/util.hpp>
 #include <fstream>
 
-conduit::vector<char> vtapp::readFile(const conduit::string &fileName)
+conduit::vector<char> vtapp::util::readFile(const conduit::string &fileSource)
 {
-    std::ifstream file(fileName, std::ios::ate | std::ios::binary);
+    std::ifstream file(fileSource, std::ios::ate | std::ios::binary);
 
     if (!file.is_open())
     {
-        throw std::runtime_error("failed to open file: " + fileName);
+        throw std::runtime_error("failed to open file: " + fileSource);
     }
 
     // Allocate enough space for buffer.
